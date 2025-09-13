@@ -15,6 +15,7 @@ from uuid import UUID
 from app.core.config import settings
 from app.models.restaurant import User, Restaurant
 from app.models.base import UserRole
+from app.models.table import GuestSession
 
 
 # =================================================================

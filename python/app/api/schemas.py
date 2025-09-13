@@ -48,6 +48,29 @@ class PaginationMeta(BaseModel):
     size: int
     pages: int
 
+# =================================================================
+# RESTAURANT OWNER REGISTRATION SCHEMA
+# =================================================================
+
+class RestaurantOwnerRegister(BaseModel):
+    """Restaurant owner registration with restaurant creation."""
+    # Owner details
+    owner_email: EmailStr
+    owner_password: str = Field(min_length=8)
+    owner_first_name: str = Field(min_length=1, max_length=100)
+    owner_last_name: str = Field(min_length=1, max_length=100)
+    owner_phone: Optional[str] = Field(None, max_length=20)
+    
+    # Restaurant details
+    restaurant_name: str = Field(min_length=1, max_length=255)
+    restaurant_code: str = Field(min_length=1, max_length=50)
+    business_email: EmailStr
+    business_phone: Optional[str] = Field(None, max_length=20)
+    cuisine_type: Optional[str] = Field(None, max_length=100)
+    address: Optional[Dict[str, Any]] = None
+    timezone: str = Field(default="UTC", max_length=50)
+    currency_code: str = Field(default="USD", max_length=3)
+
 
 # =================================================================
 # AUTHENTICATION SCHEMAS
@@ -179,6 +202,33 @@ class DashboardSummary(BaseModel):
     operational: Dict[str, Any]
     performance: Dict[str, Any]
 
+# =================================================================
+# STAFF SCHEMAS
+# =================================================================
+
+class StaffRegister(BaseModel):
+    """Staff registration by owner/manager."""
+    email: EmailStr
+    password: str = Field(min_length=8)
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    phone_number: Optional[str] = Field(None, max_length=20)
+    role: UserRole = UserRole.STAFF
+    staff_type: StaffType
+    hourly_rate: Optional[float] = Field(None, ge=0)
+    permissions: Optional[Dict[str, Any]] = None
+
+class StaffUpdate(BaseModel):
+    """Staff update by owner/manager."""
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    phone_number: Optional[str] = Field(None, max_length=20)
+    role: Optional[UserRole] = None
+    staff_type: Optional[StaffType] = None
+    hourly_rate: Optional[float] = Field(None, ge=0)
+    permissions: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
 
 # =================================================================
 # TABLE SCHEMAS
@@ -277,20 +327,6 @@ class MenuCategoryBase(BaseModel):
     description: Optional[str] = None
     image_url: Optional[str] = Field(None, max_length=500)
 
-class MenuCategoryCreate(MenuCategoryBase):
-    """Menu category creation."""
-    display_order: int = 0
-    available_all_day: bool = True
-    available_from: Optional[time] = None
-    available_until: Optional[time] = None
-
-class MenuCategoryUpdate(BaseModel):
-    """Menu category update."""
-    category_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    display_order: Optional[int] = None
-    is_active: Optional[bool] = None
-
 class MenuCategoryResponse(MenuCategoryBase):
     """Menu category response."""
     id: UUID
@@ -311,28 +347,6 @@ class MenuItemBase(BaseModel):
     description: Optional[str] = None
     price: Decimal = Field(gt=0)
     cost_price: Optional[Decimal] = Field(None, ge=0)
-
-class MenuItemCreate(MenuItemBase):
-    """Menu item creation."""
-    category_id: Optional[UUID] = None
-    prep_time_minutes: int = Field(default=15, ge=0, le=180)
-    is_vegetarian: bool = False
-    is_vegan: bool = False
-    is_gluten_free: bool = False
-    is_spicy: bool = False
-    spice_level: int = Field(default=0, ge=0, le=5)
-    calories: Optional[int] = Field(None, ge=0)
-    display_order: int = 0
-    is_featured: bool = False
-
-class MenuItemUpdate(BaseModel):
-    """Menu item update."""
-    item_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    price: Optional[Decimal] = Field(None, gt=0)
-    cost_price: Optional[Decimal] = Field(None, ge=0)
-    is_available: Optional[bool] = None
-    is_featured: Optional[bool] = None
 
 class MenuItemResponse(MenuItemBase):
     """Menu item response."""
@@ -358,6 +372,85 @@ class MenuItemResponse(MenuItemBase):
     class Config:
         from_attributes = True
 
+class MenuCategoryCreate(BaseModel):
+    """Schema for creating menu category."""
+    category_name: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    display_order: int = Field(default=0)
+    is_active: bool = Field(default=True)
+    available_all_day: bool = Field(default=True)
+    available_from: Optional[time] = None
+    available_until: Optional[time] = None
+
+class MenuCategoryUpdate(BaseModel):
+    """Schema for updating menu category."""
+    category_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    display_order: Optional[int] = None
+    is_active: Optional[bool] = None
+    available_all_day: Optional[bool] = None
+    available_from: Optional[time] = None
+    available_until: Optional[time] = None
+
+class MenuItemCreate(BaseModel):
+    """Schema for creating menu item."""
+    category_id: Optional[UUID] = None
+    item_name: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = None
+    price: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    cost_price: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    prep_time_minutes: int = Field(default=15, ge=1, le=120)
+    is_vegetarian: bool = Field(default=False)
+    is_vegan: bool = Field(default=False)
+    is_gluten_free: bool = Field(default=False)
+    is_spicy: bool = Field(default=False)
+    spice_level: int = Field(default=0, ge=0, le=5)
+    calories: Optional[int] = Field(None, ge=0)
+    is_available: bool = Field(default=True)
+    image_url: Optional[str] = None
+    is_featured: bool = Field(default=False)
+    is_popular: bool = Field(default=False)
+    display_order: int = Field(default=0)
+
+class MenuItemUpdate(BaseModel):
+    """Schema for updating menu item."""
+    category_id: Optional[UUID] = None
+    item_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    price: Optional[Decimal] = Field(None, gt=0, max_digits=10, decimal_places=2)
+    cost_price: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    prep_time_minutes: Optional[int] = Field(None, ge=1, le=120)
+    is_vegetarian: Optional[bool] = None
+    is_vegan: Optional[bool] = None
+    is_gluten_free: Optional[bool] = None
+    is_spicy: Optional[bool] = None
+    spice_level: Optional[int] = Field(None, ge=0, le=5)
+    calories: Optional[int] = Field(None, ge=0)
+    is_available: Optional[bool] = None
+    image_url: Optional[str] = None
+    is_featured: Optional[bool] = None
+    is_popular: Optional[bool] = None
+    display_order: Optional[int] = None
+
+class MenuItemOptionCreate(BaseModel):
+    """Schema for creating menu item option."""
+    option_group: str = Field(min_length=1, max_length=100)
+    option_name: str = Field(min_length=1, max_length=255)
+    price_change: Decimal = Field(default=Decimal("0"), max_digits=6, decimal_places=2)
+    is_default: bool = Field(default=False)
+    is_active: bool = Field(default=True)
+    display_order: int = Field(default=0)
+
+class MenuItemOptionUpdate(BaseModel):
+    """Schema for updating menu item option."""
+    option_group: Optional[str] = Field(None, min_length=1, max_length=100)
+    option_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    price_change: Optional[Decimal] = Field(None, max_digits=6, decimal_places=2)
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+    display_order: Optional[int] = None
 
 # =================================================================
 # ORDER SCHEMAS

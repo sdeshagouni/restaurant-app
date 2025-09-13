@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from datetime import timedelta, datetime
 from typing import Dict, Any, Optional
 from uuid import uuid4
-from pydantic import BaseModel, EmailStr, Field
 from decimal import Decimal
 
 from app.core.security import (
@@ -21,36 +20,12 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.api.schemas import (
     UserLogin, TokenResponse, RefreshTokenRequest, UserRegister, UserProfile,
-    UserUpdate, ChangePasswordRequest, SuccessResponse
+    UserUpdate, ChangePasswordRequest, SuccessResponse, RestaurantOwnerRegister
 )
 from app.models.restaurant import User, Restaurant
 from app.models.base import UserRole, StaffType, RestaurantStatus, SubscriptionTier
 
 router = APIRouter()
-
-
-# =================================================================
-# RESTAURANT OWNER REGISTRATION SCHEMA
-# =================================================================
-
-class RestaurantOwnerRegister(BaseModel):
-    """Restaurant owner registration with restaurant creation."""
-    # Owner details
-    owner_email: EmailStr
-    owner_password: str = Field(min_length=8)
-    owner_first_name: str = Field(min_length=1, max_length=100)
-    owner_last_name: str = Field(min_length=1, max_length=100)
-    owner_phone: Optional[str] = Field(None, max_length=20)
-    
-    # Restaurant details
-    restaurant_name: str = Field(min_length=1, max_length=255)
-    restaurant_code: str = Field(min_length=1, max_length=50)
-    business_email: EmailStr
-    business_phone: Optional[str] = Field(None, max_length=20)
-    cuisine_type: Optional[str] = Field(None, max_length=100)
-    address: Optional[Dict[str, Any]] = None
-    timezone: str = Field(default="UTC", max_length=50)
-    currency_code: str = Field(default="USD", max_length=3)
 
 
 # =================================================================

@@ -7,44 +7,18 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
 
 from app.core.security import (
     get_owner_or_manager_user, get_restaurant_context, get_password_hash
 )
 from app.core.database import get_db
 from app.models.restaurant import User, Restaurant
-from app.models.base import UserRole, StaffType
+from app.models.base import UserRole
+from app.api.schemas import StaffRegister, StaffUpdate
 
 router = APIRouter()
 
 
-# =================================================================
-# STAFF SCHEMAS
-# =================================================================
-
-class StaffRegister(BaseModel):
-    """Staff registration by owner/manager."""
-    email: EmailStr
-    password: str = Field(min_length=8)
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    phone_number: Optional[str] = Field(None, max_length=20)
-    role: UserRole = UserRole.STAFF
-    staff_type: StaffType
-    hourly_rate: Optional[float] = Field(None, ge=0)
-    permissions: Optional[Dict[str, Any]] = None
-
-class StaffUpdate(BaseModel):
-    """Staff update by owner/manager."""
-    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    phone_number: Optional[str] = Field(None, max_length=20)
-    role: Optional[UserRole] = None
-    staff_type: Optional[StaffType] = None
-    hourly_rate: Optional[float] = Field(None, ge=0)
-    permissions: Optional[Dict[str, Any]] = None
-    is_active: Optional[bool] = None
 
 
 # =================================================================
