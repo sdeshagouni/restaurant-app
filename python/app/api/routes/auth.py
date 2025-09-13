@@ -151,65 +151,6 @@ async def register_restaurant_owner(
 # EXISTING AUTHENTICATION ENDPOINTS
 # =================================================================
 
-@router.post("/register", response_model=SuccessResponse)
-async def register_user(
-    user_data: UserRegister,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
-):
-    """Register a new user (Admin only)."""
-    
-    # Check if email already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Verify restaurant exists
-    restaurant = db.query(Restaurant).filter(Restaurant.id == user_data.restaurant_id).first()
-    if not restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        password_hash=hashed_password,
-        first_name=user_data.first_name,
-        last_name=user_data.last_name,
-        phone_number=user_data.phone_number,
-        role=user_data.role,
-        staff_type=user_data.staff_type,
-        restaurant_id=user_data.restaurant_id
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return {
-        "success": True,
-        "data": {
-            "user": {
-                "id": str(new_user.id),
-                "email": new_user.email,
-                "first_name": new_user.first_name,
-                "last_name": new_user.last_name,
-                "role": new_user.role,
-                "restaurant_id": str(new_user.restaurant_id),
-                "is_active": new_user.is_active,
-                "created_at": new_user.created_at.isoformat() + "Z"
-            }
-        },
-        "message": "User registered successfully"
-    }
-
-
 @router.post("/login")
 async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
